@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ingestTelemetry } from "@/lib/telemetry-store";
+import { persistTelemetryStore, readTelemetryStore } from "@/lib/redis-telemetry";
 
 export async function POST(request: NextRequest) {
+  await readTelemetryStore();
   const body = await request.json().catch(() => ({}));
   const provider = request.nextUrl.searchParams.get("provider") || body.provider || "custom";
   const event = ingestTelemetry({
@@ -13,7 +15,8 @@ export async function POST(request: NextRequest) {
     metric: body.metric || body.metrics,
     raw: body,
   });
-  return NextResponse.json({ ok: true, provider, event });
+  const persistence = await persistTelemetryStore();
+  return NextResponse.json({ ok: true, provider, event, persistence });
 }
 
 function normalizeSource(provider: string, body: Record<string, unknown>) {

@@ -160,6 +160,13 @@ export function DeploymentsPage() {
 }
 
 export function IntegrationsPage() {
+  const [status, setStatus] = useState<{ upstashRedis?: { configured: boolean }; supabase?: { configured: boolean } }>({});
+  useEffect(() => {
+    fetch("/api/integrations/status", { cache: "no-store" })
+      .then((res) => res.json())
+      .then(setStatus)
+      .catch(() => setStatus({}));
+  }, []);
   const origin = typeof window === "undefined" ? "http://localhost:3000" : window.location.origin;
   const ingestCommand = `curl -X POST ${origin}/api/telemetry \\
   -H "content-type: application/json" \\
@@ -174,6 +181,14 @@ export function IntegrationsPage() {
         <Panel>
           <h2 className="font-semibold">Supported ingest paths</h2>
           <div className="mt-4 grid gap-3">
+            <div className="flex items-center gap-3 rounded-md border border-white/10 bg-white/[0.04] p-3 text-sm">
+              <CheckCircle2 className={cn("size-4", status.upstashRedis?.configured ? "text-emerald-300" : "text-zinc-500")} />
+              Upstash Redis persistence: {status.upstashRedis?.configured ? "configured" : "not configured"}
+            </div>
+            <div className="flex items-center gap-3 rounded-md border border-white/10 bg-white/[0.04] p-3 text-sm">
+              <CheckCircle2 className={cn("size-4", status.supabase?.configured ? "text-emerald-300" : "text-zinc-500")} />
+              Supabase connection: {status.supabase?.configured ? "configured" : "not configured"}
+            </div>
             {["Generic JSON telemetry", "Datadog/Grafana alert webhooks", "Kubernetes event forwarders", "GitHub Actions deployment webhooks", "Application log drains"].map((item) => (
               <div key={item} className="flex items-center gap-3 rounded-md border border-white/10 bg-white/[0.04] p-3 text-sm"><CheckCircle2 className="size-4 text-emerald-300" /> {item}</div>
             ))}
@@ -186,6 +201,8 @@ export function IntegrationsPage() {
           <pre className="overflow-auto rounded-md border border-white/10 bg-black/35 p-3 text-xs leading-5 text-zinc-300">{ingestCommand}</pre>
           <h3 className="mb-2 mt-5 text-sm font-medium">Simulate a provider webhook</h3>
           <pre className="overflow-auto rounded-md border border-white/10 bg-black/35 p-3 text-xs leading-5 text-zinc-300">{webhookCommand}</pre>
+          <h3 className="mb-2 mt-5 text-sm font-medium">Supabase note</h3>
+          <p className="text-sm leading-6 text-zinc-400">Supabase credentials are configured for future persistent database/auth work. Telemetry currently persists through Upstash Redis to minimize free-tier database setup and write volume.</p>
         </Panel>
       </div>
     </Shell>

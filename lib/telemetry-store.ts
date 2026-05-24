@@ -34,7 +34,7 @@ export type TelemetryEvent = {
   raw?: unknown;
 };
 
-type Store = {
+export type Store = {
   metrics: TelemetryMetric[];
   incidents: TelemetryIncident[];
   services: TelemetryService[];
@@ -60,6 +60,19 @@ function makeStore(): Store {
 
 export function getTelemetryStore() {
   if (!globalStore.__pulserootStore) globalStore.__pulserootStore = makeStore();
+  return globalStore.__pulserootStore;
+}
+
+export function replaceTelemetryStore(store: Store) {
+  globalStore.__pulserootStore = {
+    metrics: store.metrics || [],
+    incidents: store.incidents || [],
+    services: store.services || [],
+    events: store.events || [],
+    logs: store.logs || [],
+    deployments: store.deployments || [],
+    kubernetes: store.kubernetes || [],
+  };
   return globalStore.__pulserootStore;
 }
 

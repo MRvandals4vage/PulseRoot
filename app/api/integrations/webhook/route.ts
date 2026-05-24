@@ -1,9 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ingestTelemetry } from "@/lib/telemetry-store";
 import { persistTelemetryStore, readTelemetryStore } from "@/lib/redis-telemetry";
+import { persistSupabaseEvents, readSupabaseTelemetry, supabaseConfigured } from "@/lib/supabase-telemetry";
 
 export async function POST(request: NextRequest) {
-  await readTelemetryStore();
+  await (supabaseConfigured() ? readSupabaseTelemetry() : readTelemetryStore());
   const body = await request.json().catch(() => ({}));
   const provider = request.nextUrl.searchParams.get("provider") || body.provider || "custom";
   const event = ingestTelemetry({
@@ -15,7 +16,10 @@ export async function POST(request: NextRequest) {
     metric: body.metric || body.metrics,
     raw: body,
   });
-  const persistence = await persistTelemetryStore();
+  const durable = await persistSupabaseEvents([event]);
+  const refreshed = await readSupabaseTelemetry();
+  const cache = await persistTelemetryStore(refreshed || undefined);
+  const persistence = { durable, cache };
   return NextResponse.json({ ok: true, provider, event, persistence });
 }
 

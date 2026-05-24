@@ -5,8 +5,17 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Bell, Boxes, CheckCircle2, Clock3, Gauge, GitBranch, Globe2, MessageSquare, Play, Radar, Search, ShieldAlert, Terminal, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { TelemetryEvent, TelemetryIncident } from "@/lib/telemetry-store";
+
+const severityVariants: Record<string, "default" | "secondary" | "destructive" | "warning" | "success" | "outline"> = {
+  critical: "destructive",
+  high: "warning",
+  medium: "default",
+  low: "success",
+};
 
 const navItems = [
   ["Command Center", "/dashboard", Gauge],
@@ -26,7 +35,14 @@ type TelemetryState = {
 };
 
 function Panel({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <section className={cn("glass rounded-lg p-4", className)}>{children}</section>;
+  return (
+    <Card className={cn(
+      "group relative overflow-hidden rounded-2xl border-white/10 bg-white/[0.03] backdrop-blur-md transition-all duration-300 hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/10 p-4",
+      className
+    )}>
+      {children}
+    </Card>
+  );
 }
 
 function EmptyState({ title, body }: { title: string; body: string }) {
@@ -103,7 +119,11 @@ export function IncidentsPage() {
         {telemetry.incidents.length ? telemetry.incidents.map((incident) => (
           <div key={incident.id} className="mb-3 rounded-lg border border-white/10 bg-white/[0.04] p-4">
             <div className="flex items-center justify-between gap-3"><span className="font-medium">{incident.title}</span><span className="text-xs text-zinc-500">{incident.time} · {incident.confidence}%</span></div>
-            <div className="mt-2 text-sm text-zinc-400">{incident.service} · {incident.severity}</div>
+            <div className="mt-2 flex items-center gap-2 text-sm text-zinc-400">
+              <span>{incident.service}</span>
+              <span>·</span>
+              <Badge variant={severityVariants[incident.severity] || "default"}>{incident.severity}</Badge>
+            </div>
           </div>
         )) : <EmptyState title="No real incidents received" body="Incidents appear only when high-severity events arrive through /api/telemetry or /api/integrations/webhook." />}
       </Panel>

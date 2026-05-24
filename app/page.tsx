@@ -1,9 +1,14 @@
 import Link from "next/link";
 import { Activity, ArrowRight, Bell, Bot, BrainCircuit, CheckCircle2, Database, GitBranch, LineChart, Lock, MessageSquare, Radar, Server, ShieldAlert, Sparkles, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 function Glass({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <div className={`glass rounded-lg ${className}`}>{children}</div>;
+  return (
+    <Card className={`group relative overflow-hidden rounded-2xl border-white/10 bg-white/[0.03] backdrop-blur-md transition-all duration-300 hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/10 ${className}`}>
+      {children}
+    </Card>
+  );
 }
 
 export default function LandingPage() {
@@ -39,9 +44,7 @@ export default function LandingPage() {
 
       <section className="relative z-10 mx-auto grid min-h-[calc(100vh-80px)] max-w-7xl items-center gap-10 px-5 pb-16 pt-8 lg:grid-cols-[.9fr_1.1fr]">
         <div>
-          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-400/20 bg-blue-500/10 px-3 py-1 text-sm text-blue-200">
-            <Sparkles className="size-4" /> AI incident intelligence for SRE teams
-          </div>
+
           <h1 className="max-w-4xl text-5xl font-semibold leading-[1.03] tracking-tight md:text-7xl">
             AI That Finds Your Outages Before Your Team Does.
           </h1>
@@ -141,15 +144,7 @@ export default function LandingPage() {
         </Glass>
       </section>
 
-      <section className="relative z-10 mx-auto grid max-w-7xl gap-4 px-5 py-16 lg:grid-cols-3">
-        {["NovaStack", "FinAPI Cloud", "Atlas Commerce"].map((name) => (
-          <Glass key={name} className="p-5">
-            <p className="text-sm leading-6 text-zinc-300">“PulseRoot turned incident review from guesswork into a clear sequence of facts, fixes, and prevention steps.”</p>
-            <div className="mt-4 text-sm font-medium">{name}</div>
-            <div className="text-xs text-zinc-500">Platform Engineering</div>
-          </Glass>
-        ))}
-      </section>
+
 
       <section id="pricing" className="relative z-10 mx-auto max-w-7xl px-5 py-16">
         <div className="grid gap-4 md:grid-cols-3">

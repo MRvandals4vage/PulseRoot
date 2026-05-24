@@ -1,30 +1,319 @@
-import Link from "next/link";
-import { Radar } from "lucide-react";
-import { Button } from "@/components/ui/button";
+"use client";
 
-export default function LoginPage() {
-  return (
-    <main className="grid min-h-screen place-items-center px-5 text-zinc-100">
-      <div className="glass w-full max-w-md rounded-lg p-6">
-        <div className="mb-8 flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-lg bg-blue-500/15 text-blue-200">
-            <Radar className="size-5" />
-          </div>
-          <div>
-            <div className="font-semibold">PulseRoot</div>
-            <div className="text-xs text-zinc-500">Secure workspace login</div>
-          </div>
-        </div>
-        <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
-        <p className="mt-2 text-sm text-zinc-400">Sign in to your incident intelligence workspace.</p>
-        <div className="mt-6 space-y-3">
-          <input className="h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 outline-none focus:border-blue-400" placeholder="you@company.com" />
-          <input className="h-11 w-full rounded-md border border-white/10 bg-white/5 px-3 outline-none focus:border-blue-400" placeholder="Password" type="password" />
-        </div>
-        <Button asChild className="mt-5 w-full"><Link href="/api/demo-login">Login</Link></Button>
-        <Button asChild variant="secondary" className="mt-3 w-full"><Link href="/api/demo-login">Demo login</Link></Button>
-        <p className="mt-5 text-center text-sm text-zinc-500">No workspace? <Link href="/signup" className="text-blue-300">Create one</Link></p>
-      </div>
-    </main>
-  );
+import React, { useState, useEffect, forwardRef } from "react";
+import {
+  Eye,
+  EyeOff,
+  Github,
+  Twitter,
+  Linkedin,
+  Sun,
+  Moon,
+  Sparkles,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface ComponentProps {
+  label?: string;
+  onClick?(): void;
+  className?: string;
+  type?: "button" | "submit" | "reset";
 }
+
+export const GlowButton = forwardRef<HTMLButtonElement, ComponentProps>(
+  ({ label = "Generate", onClick, className, type = "button" }, ref) => {
+    const [isClicked, setIsClicked] = useState(false);
+
+    const handleClick = () => {
+      setIsClicked(true);
+      setTimeout(() => setIsClicked(false), 200);
+      onClick?.();
+    };
+
+    return (
+      <button
+        ref={ref}
+        type={type}
+        aria-label={label}
+        className={cn("glow-btn", className)}
+        onClick={handleClick}
+        data-state={isClicked ? "clicked" : undefined}
+      >
+        <span className="flex items-center justify-center gap-1.5">
+          {label}
+          <Sparkles size={16} className="ml-0.5" />
+        </span>
+      </button>
+    );
+  }
+);
+GlowButton.displayName = "GlowButton";
+
+const LoginPage: React.FC = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isEmailFocused, setIsEmailFocused] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  const [isEmailValid, setIsEmailValid] = useState(true);
+  const [isFormSubmitted, setIsFormSubmitted] = useState(false);
+
+  // Email validation
+  const validateEmail = (email: string) => {
+    const re =
+      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(String(email).toLowerCase());
+  };
+
+  // Handle email change
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+    if (e.target.value) {
+      setIsEmailValid(validateEmail(e.target.value));
+    } else {
+      setIsEmailValid(true);
+    }
+  };
+
+  // Handle form submission
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsFormSubmitted(true);
+
+    if (email && password && validateEmail(email)) {
+      console.log("Form submitted:", { email, password, rememberMe });
+      
+      // Simulate successful login feedback and redirect
+      const form = document.querySelector(".login-form") as HTMLElement;
+      if (form) {
+        form.classList.add("form-success");
+        setTimeout(() => {
+          form.classList.remove("form-success");
+          window.location.href = "/api/demo-login";
+        }, 1200);
+      }
+    }
+  };
+
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+    document.documentElement.classList.toggle("dark-mode");
+  };
+
+  // Initialize theme based on user preference
+  useEffect(() => {
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    ).matches;
+    setIsDarkMode(prefersDark);
+    if (prefersDark) {
+      document.documentElement.classList.add("dark-mode");
+    }
+  }, []);
+
+  // Create particles
+  useEffect(() => {
+    const canvas = document.getElementById("particles") as HTMLCanvasElement;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // Set canvas size
+    const setCanvasSize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+
+    setCanvasSize();
+    window.addEventListener("resize", setCanvasSize);
+
+    // Particle class
+    class Particle {
+      x: number;
+      y: number;
+      size: number;
+      speedX: number;
+      speedY: number;
+      color: string;
+
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 3 + 1;
+        this.speedX = (Math.random() - 0.5) * 0.5;
+        this.speedY = (Math.random() - 0.5) * 0.5;
+        this.color = isDarkMode
+          ? `rgba(255, 255, 255, ${Math.random() * 0.2})`
+          : `rgba(0, 0, 100, ${Math.random() * 0.2})`;
+      }
+
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+
+        if (this.x > canvas.width) this.x = 0;
+        if (this.x < 0) this.x = canvas.width;
+        if (this.y > canvas.height) this.y = 0;
+        if (this.y < 0) this.y = canvas.height;
+      }
+
+      draw() {
+        if (!ctx) return;
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    const particles: Particle[] = [];
+    const particleCount = Math.min(
+      100,
+      Math.floor((canvas.width * canvas.height) / 15000)
+    );
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(new Particle());
+    }
+
+    const animate = () => {
+      if (!ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (const particle of particles) {
+        particle.update();
+        particle.draw();
+      }
+
+      requestAnimationFrame(animate);
+    };
+
+    const animId = requestAnimationFrame(animate);
+
+    return () => {
+      window.removeEventListener("resize", setCanvasSize);
+      cancelAnimationFrame(animId);
+    };
+  }, [isDarkMode]);
+
+  const handleSocialClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    window.location.href = "/api/demo-login";
+  };
+
+  return (
+    <div className={`login-container ${isDarkMode ? "dark" : "light"}`}>
+      <canvas id="particles" className="particles-canvas"></canvas>
+
+      <div className="theme-toggle" onClick={toggleDarkMode}>
+        {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+      </div>
+
+      <div className="login-card">
+        <div className="login-card-inner">
+          <div className="login-header">
+            <h1>Welcome</h1>
+            <p>Please sign in to continue</p>
+          </div>
+
+          <form className="login-form" onSubmit={handleSubmit}>
+            <div
+              className={`form-field ${
+                isEmailFocused || email ? "active" : ""
+              } ${!isEmailValid && email ? "invalid" : ""}`}
+            >
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={handleEmailChange}
+                onFocus={() => setIsEmailFocused(true)}
+                onBlur={() => setIsEmailFocused(false)}
+                required
+              />
+              <label htmlFor="email">Email Address</label>
+              {!isEmailValid && email && (
+                <span className="error-message">
+                  Please enter a valid email
+                </span>
+              )}
+            </div>
+
+            <div
+              className={`form-field ${
+                isPasswordFocused || password ? "active" : ""
+              }`}
+            >
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onFocus={() => setIsPasswordFocused(true)}
+                onBlur={() => setIsPasswordFocused(false)}
+                required
+              />
+              <label htmlFor="password">Password</label>
+              <button
+                type="button"
+                className="toggle-password"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+
+            <div className="form-options">
+              <label className="remember-me">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={() => setRememberMe(!rememberMe)}
+                />
+                <span className="checkmark"></span>
+                Remember me
+              </label>
+
+              <a href="#" className="forgot-password">
+                Forgot Password?
+              </a>
+            </div>
+
+            <GlowButton
+              label="Sign In"
+              type="submit"
+              className="w-full py-3 h-12"
+            />
+          </form>
+
+          <div className="separator">
+            <span>or continue with</span>
+          </div>
+
+          <div className="social-login">
+            <button className="social-button github" onClick={handleSocialClick}>
+              <Github size={18} />
+            </button>
+            <button className="social-button twitter" onClick={handleSocialClick}>
+              <Twitter size={18} />
+            </button>
+            <button className="social-button linkedin" onClick={handleSocialClick}>
+              <Linkedin size={18} />
+            </button>
+          </div>
+
+          <p className="signup-prompt">
+            Don't have an account? <a href="/signup">Sign up</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default LoginPage;

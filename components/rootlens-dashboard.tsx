@@ -43,6 +43,9 @@ import {
   YAxis,
 } from "recharts";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { GlassBlogCard } from "@/components/glass-blog-card";
 import { incidents, logs, metricSeries, reportMarkdown, services, Severity, timeline } from "@/components/rootlens-data";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -55,8 +58,22 @@ const severityStyles: Record<Severity, string> = {
   low: "bg-emerald-500/15 text-emerald-200 border-emerald-400/30",
 };
 
+const severityVariants: Record<Severity, "default" | "secondary" | "destructive" | "warning" | "success" | "outline"> = {
+  critical: "destructive",
+  high: "warning",
+  medium: "default",
+  low: "success",
+};
+
 function Panel({ className, children }: { className?: string; children: React.ReactNode }) {
-  return <section className={cn("glass rounded-lg p-4", className)}>{children}</section>;
+  return (
+    <Card className={cn(
+      "group relative overflow-hidden rounded-2xl border-white/10 bg-white/[0.03] backdrop-blur-md transition-all duration-300 hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/10 p-4",
+      className
+    )}>
+      {children}
+    </Card>
+  );
 }
 
 function MiniStat({ label, value, icon: Icon, tone }: { label: string; value: string; icon: any; tone: string }) {
@@ -66,7 +83,7 @@ function MiniStat({ label, value, icon: Icon, tone }: { label: string; value: st
         <div className={cn("flex size-9 items-center justify-center rounded-md", tone)}>
           <Icon className="size-4" />
         </div>
-        <span className="text-xs text-zinc-500">live</span>
+        <Badge variant="outline" className="text-[10px] py-0 px-1.5 border-zinc-800 text-zinc-500 normal-case font-sans">live</Badge>
       </div>
       <div className="mt-5 text-2xl font-semibold tracking-tight">{value}</div>
       <div className="mt-1 text-xs text-zinc-400">{label}</div>
@@ -79,7 +96,9 @@ function MetricChart({ title, dataKey, color, data }: { title: string; dataKey: 
     <Panel className="h-48">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-medium">{title}</h3>
-        <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-zinc-400">{data.length ? "streaming" : "waiting"}</span>
+        <Badge variant={data.length ? "success" : "secondary"}>
+          {data.length ? "streaming" : "waiting"}
+        </Badge>
       </div>
       <ResponsiveContainer width="100%" height="78%">
         <AreaChart data={data}>
@@ -267,9 +286,9 @@ export function PulseRootDashboard() {
             </Button>
             <div className="mt-3 grid grid-cols-2 gap-2">
               {["K8s crash", "API storm", "Memory leak", "Cache outage"].map((mode) => (
-                <button key={mode} onClick={() => triggerScenario(mode)} className="rounded-md border border-white/10 bg-white/5 px-2 py-2 text-xs text-zinc-300 hover:bg-white/10">
+                <Button key={mode} onClick={() => triggerScenario(mode)} variant="secondary" size="sm" className="w-full text-xs">
                   {mode}
-                </button>
+                </Button>
               ))}
             </div>
           </Panel>
@@ -324,18 +343,20 @@ export function PulseRootDashboard() {
             <Panel className="scanline">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="font-semibold">AI Root Cause Engine</h2>
-                <span className="rounded-full border border-blue-400/25 bg-blue-500/10 px-2 py-1 text-xs text-blue-200">confidence {running ? "94%" : "86%"}</span>
+                <Badge variant="default" className="normal-case font-sans">confidence {running ? "94%" : "86%"}</Badge>
               </div>
-              <div className="rounded-lg border border-white/10 bg-black/25 p-4">
+              <Card className="p-4 bg-black/20 shadow-none hover:shadow-none hover:border-white/10">
                 <div className="flex items-center gap-2 text-sm text-blue-200">
                   <Bot className="size-4" /> Investigation narrative
                 </div>
                 <p className="mt-3 text-sm leading-6 text-zinc-300">{aiResult || aiText}</p>
-              </div>
+              </Card>
               <div className="mt-4 grid gap-3">
                 {["Rollback payment-service to v1.4.1", "Scale Postgres pooler replicas to 6", "Suppress duplicate retry-storm alerts", "Notify payments-oncall and platform-leads"].map((fix, i) => (
-                  <motion.div initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.08 }} key={fix} className="flex items-center gap-3 rounded-md border border-white/10 bg-white/[0.04] p-3 text-sm text-zinc-300">
-                    <Zap className="size-4 text-amber-300" /> {fix}
+                  <motion.div initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.08 }} key={fix}>
+                    <Card className="flex items-center gap-3 p-3 text-sm text-zinc-300 shadow-none">
+                      <Zap className="size-4 text-amber-300" /> {fix}
+                    </Card>
                   </motion.div>
                 ))}
               </div>
@@ -348,13 +369,16 @@ export function PulseRootDashboard() {
               <div className="space-y-3">
                 <AnimatePresence>
                   {activeIncidents.length ? activeIncidents.map((incident) => (
-                    <motion.div layout initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} key={incident.title} className="rounded-lg border border-white/10 bg-white/[0.04] p-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className={cn("rounded-full border px-2 py-1 text-[11px]", severityStyles[incident.severity])}>{incident.severity}</span>
-                        <span className="text-xs text-zinc-500">{incident.time}</span>
-                      </div>
-                      <div className="mt-2 text-sm font-medium">{incident.title}</div>
-                      <div className="mt-1 text-xs text-zinc-500">{incident.service} · AI {incident.confidence}%</div>
+                    <motion.div layout initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} key={incident.title}>
+                      <GlassBlogCard
+                        title={incident.title}
+                        excerpt={`Root cause identified affecting ${incident.service}. AI analysis complete.`}
+                        date={incident.time}
+                        readTime={`AI ${incident.confidence}%`}
+                        tags={["Incident", incident.severity]}
+                        author={{ name: incident.service, avatar: "" }}
+                        className="mb-3"
+                      />
                     </motion.div>
                   )) : <EmptyState title="No incidents yet" body="Real incidents will appear here when alerts or high-severity telemetry are ingested." />}
                 </AnimatePresence>
@@ -398,13 +422,13 @@ export function PulseRootDashboard() {
                   ["prod/jobs", "memory pressure", Boxes, "text-orange-200"],
                   ["ingress-nginx", "latency elevated", Globe2, "text-blue-200"],
                 ] : telemetry.kubernetes.map((event) => [event.service, event.message, Boxes, event.severity === "critical" ? "text-red-200" : "text-blue-200"])).map(([name, detail, Icon, tone]: any) => (
-                  <div key={name} className="flex items-center gap-3 rounded-md border border-white/10 bg-white/[0.04] p-3">
+                  <Card key={name} className="flex items-center gap-3 p-3 shadow-none">
                     <Icon className={cn("size-4", tone)} />
                     <div>
                       <div className="text-sm">{name}</div>
                       <div className="text-xs text-zinc-500">{detail}</div>
                     </div>
-                  </div>
+                  </Card>
                 ))}
                 {!running && !telemetry.kubernetes.length && <EmptyState title="No Kubernetes events" body="Connect cluster events through the webhook endpoint or POST kubernetes source events." />}
               </div>
@@ -418,14 +442,14 @@ export function PulseRootDashboard() {
                 {visibleTimeline.length ? visibleTimeline.map((item, i) => (
                   <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} key={item.title} className="grid grid-cols-[74px_1fr] gap-4">
                     <div className="text-xs text-zinc-500">{item.time}</div>
-                    <div className="relative rounded-lg border border-white/10 bg-white/[0.04] p-3">
+                    <Card className="relative p-3 shadow-none">
                       <span className={cn("absolute -left-[23px] top-4 size-3 rounded-full border", severityStyles[item.severity])} />
                       <div className="flex items-center justify-between">
                         <div className="text-sm font-medium">{item.title}</div>
-                        <span className={cn("rounded-full border px-2 py-1 text-[10px]", severityStyles[item.severity])}>{item.severity}</span>
+                        <Badge variant={severityVariants[item.severity]}>{item.severity}</Badge>
                       </div>
                       <p className="mt-1 text-xs leading-5 text-zinc-500">{item.detail}</p>
-                    </div>
+                    </Card>
                   </motion.div>
                 )) : <EmptyState title="No incident timeline" body="PulseRoot creates timelines after an incident is detected from real telemetry or when you run a demo scenario." />}
               </div>
@@ -440,7 +464,7 @@ export function PulseRootDashboard() {
                   <Button variant="secondary" size="sm" onClick={() => setNotice("Share link generated: https://pulseroot.example/incidents/checkout-api-outage-sev1")}><Share2 className="size-3" /> Share</Button>
                 </div>
               </div>
-              {running ? <pre className="max-h-[320px] overflow-auto whitespace-pre-wrap rounded-lg border border-white/10 bg-black/30 p-4 text-xs leading-5 text-zinc-300">{reportMarkdown}</pre> : <EmptyState title="No report generated" body="Incident reports are generated only after PulseRoot has a real incident or a demo scenario is running." />}
+              {running ? <pre className="max-h-[320px] overflow-auto whitespace-pre-wrap rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-md p-4 text-xs leading-5 text-zinc-300">{reportMarkdown}</pre> : <EmptyState title="No report generated" body="Incident reports are generated only after PulseRoot has a real incident or a demo scenario is running." />}
             </Panel>
           </div>
 
@@ -461,7 +485,7 @@ export function PulseRootDashboard() {
 
             <Panel>
               <h2 className="mb-4 font-semibold">AI Copilot</h2>
-              <div className="rounded-lg border border-white/10 bg-black/25 p-4">
+              <Card className="bg-black/20 p-4 shadow-none hover:shadow-none hover:border-white/10">
                 <div className="flex gap-3">
                   <Bot className="mt-1 size-4 text-blue-300" />
                   <p className="text-sm leading-6 text-zinc-300">
@@ -471,7 +495,7 @@ export function PulseRootDashboard() {
                 <div className="mt-3 rounded-md bg-black/40 p-3 font-mono text-xs text-emerald-200">
                   kubectl rollout undo deploy/payment-service -n prod && kubectl scale deploy/payment-worker --replicas=4 -n prod
                 </div>
-              </div>
+              </Card>
               <div className="mt-3 flex gap-2">
                 <input value={chat} onChange={(e) => setChat(e.target.value)} className="h-10 flex-1 rounded-md border border-white/10 bg-white/5 px-3 text-sm outline-none focus:border-blue-400" />
                 <Button onClick={askCopilot}><MessageSquare className="size-4" /> Ask</Button>

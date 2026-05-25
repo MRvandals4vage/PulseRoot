@@ -3,6 +3,8 @@ import { clearTelemetry, getTelemetryStore, ingestTelemetry } from "@/lib/teleme
 import { persistTelemetryStore, readTelemetryStore, telemetryBackend } from "@/lib/redis-telemetry";
 import { clearSupabaseTelemetry, persistSupabaseEvents, readSupabaseTelemetry, supabaseConfigured } from "@/lib/supabase-telemetry";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const durableStore = await readSupabaseTelemetry();
   const store = durableStore || await readTelemetryStore();

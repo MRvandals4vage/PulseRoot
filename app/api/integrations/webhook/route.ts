@@ -3,6 +3,8 @@ import { ingestTelemetry } from "@/lib/telemetry-store";
 import { persistTelemetryStore, readTelemetryStore } from "@/lib/redis-telemetry";
 import { persistSupabaseEvents, readSupabaseTelemetry, supabaseConfigured } from "@/lib/supabase-telemetry";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   await (supabaseConfigured() ? readSupabaseTelemetry() : readTelemetryStore());
   const body = await request.json().catch(() => ({}));

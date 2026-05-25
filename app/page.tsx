@@ -23,22 +23,33 @@ export default function LandingPage() {
 
   return (
     <main className="min-h-screen overflow-hidden text-zinc-100">
-      <div className="fixed inset-0 grid-bg opacity-70" />
-      <header className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-5 py-5">
-        <Link href="/" className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-lg bg-blue-500/15 text-blue-200">
-            <Radar className="size-5" />
-          </div>
-          <span className="font-semibold">PulseRoot</span>
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="h-full w-full object-cover opacity-25 filter brightness-[0.35] saturate-[0.7]"
+        >
+          <source src="/bgvid.mp4" type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#080a0f]/40 to-[#080a0f]" />
+      </div>
+      <div className="fixed inset-0 grid-bg opacity-30 z-0 pointer-events-none" />
+      <header className="sticky top-4 z-50 mx-auto flex max-w-5xl items-center justify-between rounded-full border border-blue-500/10 bg-[#080a0f]/60 px-6 py-3 shadow-lg shadow-blue-500/5 backdrop-blur-lg">
+        <Link href="/" className="flex items-center">
+          <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 via-blue-500 to-indigo-400 bg-clip-text text-transparent hover:opacity-90 transition-opacity">
+            PulseRoot
+          </span>
         </Link>
-        <nav className="hidden items-center gap-6 text-sm text-zinc-400 md:flex">
-          <a href="#features">Features</a>
-          <a href="#workflow">Workflow</a>
-          <a href="#pricing">Pricing</a>
+        <nav className="hidden items-center gap-8 text-sm font-medium text-zinc-400 md:flex">
+          <a href="#features" className="hover:text-blue-400 transition-colors">Features</a>
+          <a href="#workflow" className="hover:text-blue-400 transition-colors">Workflow</a>
+          <a href="#pricing" className="hover:text-blue-400 transition-colors">Pricing</a>
         </nav>
-        <div className="flex items-center gap-2">
-          <Button asChild variant="ghost"><Link href="/login">Login</Link></Button>
-          <Button asChild><Link href="/api/demo-login">Demo</Link></Button>
+        <div className="flex items-center gap-3">
+          <Button asChild variant="ghost" className="h-9 rounded-full px-4 text-zinc-300 hover:text-white hover:bg-white/5"><Link href="/login">Login</Link></Button>
+          <Button asChild className="h-9 rounded-full bg-blue-600 px-5 text-white hover:bg-blue-500 shadow-lg shadow-blue-500/20"><Link href="/api/demo-login">Demo</Link></Button>
         </div>
       </header>
 

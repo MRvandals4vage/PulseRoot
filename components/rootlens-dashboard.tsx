@@ -256,13 +256,12 @@ export function PulseRootDashboard() {
       <div className="fixed inset-0 grid-bg opacity-70" />
       <div className="relative z-10 flex min-h-screen">
         <aside className="hidden w-64 border-r border-white/10 bg-black/25 p-4 lg:block">
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-lg bg-blue-500/15 text-blue-200">
-              <Radar className="size-5" />
+          <div className="flex flex-col gap-1 px-2 py-1">
+            <div className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 via-blue-500 to-indigo-400 bg-clip-text text-transparent">
+              PulseRoot
             </div>
-            <div>
-              <div className="font-semibold">PulseRoot</div>
-              <div className="text-xs text-zinc-500">Incident Intelligence</div>
+            <div className="text-[10px] uppercase tracking-widest text-zinc-500 font-medium">
+              Incident Intelligence
             </div>
           </div>
           <nav className="mt-8 space-y-1 text-sm text-zinc-300">

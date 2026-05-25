@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { runPulseRootAi } from "@/lib/pulseroot-ai";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   const analysis = await runPulseRootAi(body);

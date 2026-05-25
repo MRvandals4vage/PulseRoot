@@ -20,7 +20,7 @@ interface ComponentProps {
   type?: "button" | "submit" | "reset";
 }
 
-export const GlowButton = forwardRef<HTMLButtonElement, ComponentProps>(
+const GlowButton = forwardRef<HTMLButtonElement, ComponentProps>(
   ({ label = "Generate", onClick, className, type = "button" }, ref) => {
     const [isClicked, setIsClicked] = useState(false);
 

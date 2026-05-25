@@ -48,3 +48,37 @@ npm install
 npm run build
 npm run start
 ```
+
+## Hackathon Submission
+
+Use these values for the Product Space submission form after deploying the app.
+
+Link to access your agent:
+
+```text
+https://YOUR_DEPLOYED_DOMAIN/agent
+```
+
+Credentials to access your agent:
+
+```text
+No credentials required. The PulseRoot agent dashboard is public for judging. Use the Demo Scenario button to run the cinematic outage flow, or send real telemetry to /api/telemetry.
+```
+
+GitHub codebase link:
+
+```text
+https://github.com/MRvandals4vage/PulseRoot
+```
+
+n8n workflow JSON file:
+
+```text
+Not applicable. PulseRoot is implemented as a Next.js production web agent with Supabase Postgres, Upstash Redis, Groq/Gemini AI endpoints, and webhook ingestion APIs.
+```
+
+Other material:
+
+```text
+README includes deployment instructions, production environment variables, ingestion examples, and architecture notes.
+```

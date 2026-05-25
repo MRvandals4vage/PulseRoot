@@ -128,50 +128,63 @@ export async function readSupabaseTelemetry(): Promise<Store | null> {
 
     return replaceTelemetryStore(store);
   } catch (err) {
+    globalSql.__pulserootSchemaReady = undefined;
     console.error("Supabase telemetry read failed, falling back gracefully:", err);
     return null;
   }
 }
 
 export async function persistSupabaseEvents(events: TelemetryEvent[]) {
-  const db = sql();
-  if (!db) return { persisted: false, backend: "supabase-unconfigured" };
-  await ensureSchema();
+  try {
+    const db = sql();
+    if (!db) return { persisted: false, backend: "supabase-unconfigured" };
+    await ensureSchema();
 
-  if (!events.length) return { persisted: true, backend: "supabase-postgres" };
+    if (!events.length) return { persisted: true, backend: "supabase-postgres" };
 
-  await db.begin(async (tx) => {
-    for (const event of events) {
-      const raw = event.raw && typeof event.raw === "object" ? event.raw as Record<string, unknown> : {};
-      const metric = "metric" in raw ? raw.metric : "metrics" in raw ? raw.metrics : null;
-      const status = typeof raw.status === "string" ? raw.status : null;
-      await tx`
-        insert into pulseroot_events (id, source, service, message, severity, status, metric, raw, created_at)
-        values (${event.id}, ${event.source}, ${event.service}, ${event.message}, ${event.severity || "low"}, ${status}, ${metric ? JSON.stringify(metric) : null}, ${JSON.stringify(raw)}, ${event.timestamp})
-        on conflict (id) do nothing
-      `;
-      if (status) {
+    await db.begin(async (tx) => {
+      for (const event of events) {
+        const raw = event.raw && typeof event.raw === "object" ? event.raw as Record<string, unknown> : {};
+        const metric = "metric" in raw ? raw.metric : "metrics" in raw ? raw.metrics : null;
+        const status = typeof raw.status === "string" ? raw.status : null;
         await tx`
-          insert into pulseroot_services (name, status, updated_at)
-          values (${event.service}, ${status}, now())
-          on conflict (name) do update set status = excluded.status, updated_at = excluded.updated_at
+          insert into pulseroot_events (id, source, service, message, severity, status, metric, raw, created_at)
+          values (${event.id}, ${event.source}, ${event.service}, ${event.message}, ${event.severity || "low"}, ${status}, ${metric ? JSON.stringify(metric) : null}, ${JSON.stringify(raw)}, ${event.timestamp})
+          on conflict (id) do nothing
         `;
+        if (status) {
+          await tx`
+            insert into pulseroot_services (name, status, updated_at)
+            values (${event.service}, ${status}, now())
+            on conflict (name) do update set status = excluded.status, updated_at = excluded.updated_at
+          `;
+        }
       }
-    }
-  });
+    });
 
-  return { persisted: true, backend: "supabase-postgres" };
+    return { persisted: true, backend: "supabase-postgres" };
+  } catch (err) {
+    globalSql.__pulserootSchemaReady = undefined;
+    console.error("Supabase telemetry write failed, falling back gracefully:", err);
+    return { persisted: false, backend: "supabase-unavailable" };
+  }
 }
 
 export async function clearSupabaseTelemetry() {
-  const db = sql();
-  if (!db) return { persisted: false, backend: "supabase-unconfigured" };
-  await ensureSchema();
-  await db.begin(async (tx) => {
-    await tx`truncate table pulseroot_events`;
-    await tx`truncate table pulseroot_services`;
-  });
-  return { persisted: true, backend: "supabase-postgres" };
+  try {
+    const db = sql();
+    if (!db) return { persisted: false, backend: "supabase-unconfigured" };
+    await ensureSchema();
+    await db.begin(async (tx) => {
+      await tx`truncate table pulseroot_events`;
+      await tx`truncate table pulseroot_services`;
+    });
+    return { persisted: true, backend: "supabase-postgres" };
+  } catch (err) {
+    globalSql.__pulserootSchemaReady = undefined;
+    console.error("Supabase telemetry clear failed, falling back gracefully:", err);
+    return { persisted: false, backend: "supabase-unavailable" };
+  }
 }
 
 function numberOrUndefined(value: unknown) {

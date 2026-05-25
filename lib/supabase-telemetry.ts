@@ -65,67 +65,72 @@ async function ensureSchema() {
 }
 
 export async function readSupabaseTelemetry(): Promise<Store | null> {
-  const db = sql();
-  if (!db) return null;
-  await ensureSchema();
+  try {
+    const db = sql();
+    if (!db) return null;
+    await ensureSchema();
 
-  const [events, services] = await Promise.all([
-    db`
-      select id, source, service, message, severity, status, metric, raw, created_at
-      from pulseroot_events
-      order by created_at desc
-      limit 250
-    `,
-    db`select name, status from pulseroot_services order by updated_at desc limit 100`,
-  ]);
+    const [events, services] = await Promise.all([
+      db`
+        select id, source, service, message, severity, status, metric, raw, created_at
+        from pulseroot_events
+        order by created_at desc
+        limit 250
+      `,
+      db`select name, status from pulseroot_services order by updated_at desc limit 100`,
+    ]);
 
-  const typedEvents: TelemetryEvent[] = events.map((row) => ({
-    id: row.id,
-    source: row.source,
-    service: row.service,
-    message: row.message,
-    severity: row.severity,
-    timestamp: row.created_at.toISOString(),
-    raw: row.raw,
-  }));
-
-  const metrics: TelemetryMetric[] = events
-    .filter((row) => row.metric)
-    .slice(0, 120)
-    .reverse()
-    .map((row) => ({
-      time: row.created_at.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
-      cpu: numberOrUndefined(row.metric?.cpu),
-      memory: numberOrUndefined(row.metric?.memory),
-      latency: numberOrUndefined(row.metric?.latency),
-      errors: numberOrUndefined(row.metric?.errors),
-      db: numberOrUndefined(row.metric?.db),
-      traffic: numberOrUndefined(row.metric?.traffic),
-    }));
-
-  const incidents: TelemetryIncident[] = events
-    .filter((row) => row.severity === "critical" || row.severity === "high")
-    .slice(0, 100)
-    .map((row) => ({
+    const typedEvents: TelemetryEvent[] = events.map((row) => ({
       id: row.id,
-      severity: row.severity,
-      time: row.created_at.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+      source: row.source,
       service: row.service,
-      title: row.message,
-      confidence: 72,
+      message: row.message,
+      severity: row.severity,
+      timestamp: row.created_at.toISOString(),
+      raw: row.raw,
     }));
 
-  const store: Store = {
-    metrics,
-    incidents,
-    services: services.map((row) => ({ name: row.name, status: row.status })) as TelemetryService[],
-    events: typedEvents,
-    logs: typedEvents.filter((event) => event.source === "log").map((event) => `[${event.service}] ${(event.severity || "low").toUpperCase()} ${event.message}`),
-    deployments: typedEvents.filter((event) => event.source === "deployment"),
-    kubernetes: typedEvents.filter((event) => event.source === "kubernetes"),
-  };
+    const metrics: TelemetryMetric[] = events
+      .filter((row) => row.metric)
+      .slice(0, 120)
+      .reverse()
+      .map((row) => ({
+        time: row.created_at.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+        cpu: numberOrUndefined(row.metric?.cpu),
+        memory: numberOrUndefined(row.metric?.memory),
+        latency: numberOrUndefined(row.metric?.latency),
+        errors: numberOrUndefined(row.metric?.errors),
+        db: numberOrUndefined(row.metric?.db),
+        traffic: numberOrUndefined(row.metric?.traffic),
+      }));
 
-  return replaceTelemetryStore(store);
+    const incidents: TelemetryIncident[] = events
+      .filter((row) => row.severity === "critical" || row.severity === "high")
+      .slice(0, 100)
+      .map((row) => ({
+        id: row.id,
+        severity: row.severity,
+        time: row.created_at.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+        service: row.service,
+        title: row.message,
+        confidence: 72,
+      }));
+
+    const store: Store = {
+      metrics,
+      incidents,
+      services: services.map((row) => ({ name: row.name, status: row.status })) as TelemetryService[],
+      events: typedEvents,
+      logs: typedEvents.filter((event) => event.source === "log").map((event) => `[${event.service}] ${(event.severity || "low").toUpperCase()} ${event.message}`),
+      deployments: typedEvents.filter((event) => event.source === "deployment"),
+      kubernetes: typedEvents.filter((event) => event.source === "kubernetes"),
+    };
+
+    return replaceTelemetryStore(store);
+  } catch (err) {
+    console.error("Supabase telemetry read failed, falling back gracefully:", err);
+    return null;
+  }
 }
 
 export async function persistSupabaseEvents(events: TelemetryEvent[]) {

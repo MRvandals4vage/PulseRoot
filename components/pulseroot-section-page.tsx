@@ -104,8 +104,17 @@ function useTelemetry() {
   const [data, setData] = useState<TelemetryState>({ incidents: [], logs: [], deployments: [], kubernetes: [], services: [] });
   useEffect(() => {
     async function load() {
-      const res = await fetch("/api/telemetry", { cache: "no-store" });
-      setData(await res.json());
+      try {
+        const res = await fetch("/api/telemetry", { cache: "no-store" });
+        if (res.ok) {
+          const text = await res.text();
+          if (text) {
+            setData(JSON.parse(text));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load telemetry dynamically on section page:", err);
+      }
     }
     load();
     const id = setInterval(load, 5000);

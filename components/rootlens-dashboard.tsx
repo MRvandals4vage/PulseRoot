@@ -157,9 +157,18 @@ export function PulseRootDashboard() {
 
   useEffect(() => {
     async function loadTelemetry() {
-      const res = await fetch("/api/telemetry", { cache: "no-store" });
-      const data = await res.json();
-      setTelemetry(data);
+      try {
+        const res = await fetch("/api/telemetry", { cache: "no-store" });
+        if (res.ok) {
+          const text = await res.text();
+          if (text) {
+            const data = JSON.parse(text);
+            setTelemetry(data);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load telemetry dynamically:", err);
+      }
     }
     loadTelemetry();
     const id = setInterval(loadTelemetry, 5000);
